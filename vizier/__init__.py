@@ -1,3 +1,12 @@
+# import error catching in sentry
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+
+sentry_sdk.init(
+    dsn="https://26e4365f93594a49bce6381099e17500@sentry.io/1395668",
+    integrations=[FlaskIntegration()]
+)
+
 # general libraries
 import os
 import sys
@@ -17,9 +26,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from logging import getLogger
 
-
-# import sentry
-# import papertrail
+# import logging from papertrail
 
 import firebase_admin
 from firebase_admin import credentials
@@ -52,8 +59,6 @@ apscheduler_logger.addHandler(apscheduler_handler)
 apscheduler_logger.setLevel(logging.INFO)
 apscheduler_stream_handler = logging.StreamHandler() #log apscheduler to stdout
 apscheduler_logger.addHandler(apscheduler_stream_handler)
-
-cred = credentials.Certificate(config.FIREBASE_AUTH_TOKEN_PATH)
 
 
 # Load Firebase connection
