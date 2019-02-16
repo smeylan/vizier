@@ -11,10 +11,5 @@ env_vars = [
 	'POSTGRES_CONNECTION_STRING'	
 ]
 
-# !!! See if we can remove these
-#'FIREBASE_PRIVATE_KEY',
-#'FIREBASE_EMAIL',
-#'FIREBASE_URL',
-
 for env_var in env_vars:
 	vars()[env_var] = os.environ[project_name+'_'+env_var]

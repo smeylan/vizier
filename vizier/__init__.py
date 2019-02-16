@@ -13,6 +13,10 @@ import sys
 import urllib
 import json
 
+# app modules
+import user
+import events
+
 
 # for flask, rate limiter, CORS
 import config
@@ -107,3 +111,34 @@ limiter = Limiter(
 @app.route('/')
 def index():
     return 'Flask is running!'
+
+@limiter.limit("100 per hour")
+@app.route('/addUser', methods=['POST'])
+def addUser(): # userId
+	args = request.get_json() 
+	response = user.addUser(args, fb, scheduler)
+	return(jsonify(response))  
+
+
+@limiter.limit("100 per hour")
+@app.route('/updateUser', methods=['POST']) 
+def updateUser(): # userId, segmentId, state, payload
+	args = request.get_json()	
+	response = user.updateUser(args, fb, scheduler)
+	return(jsonify(response))  
+
+@limiter.limit("10 per hour")
+@app.route('/removeUser', methods=['POST']) 
+def removeUser(): # userId, segmentId, state, payload
+	args = request.get_json()	
+	response = user.removeUser(args, fb, scheduler)
+	return(jsonify(response))  
+
+
+@limiter.limit("100 per hour")
+@app.route('/eventHandler', methods=['POST']) 
+def eventHandler(): # arbitrary payload
+	args = request.get_json()	
+	response = events.eventHandler(args)
+	return(jsonify(response))  
+   
