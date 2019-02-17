@@ -134,11 +134,18 @@ def removeUser(): # userId, segmentId, state, payload
 	response = user.removeUser(args, fb, scheduler)
 	return(jsonify(response))  
 
+@limiter.limit("10 per hour")
+@app.route('/inviteUser', methods=['POST']) 
+def inviteUser(): # userId, segmentId, state, payload
+	args = request.get_json()	
+	response = user.inviteUser(args, fb, scheduler)
+	return(jsonify(response))  
+
 
 @limiter.limit("100 per hour")
-@app.route('/eventHandler', methods=['POST']) 
-def eventHandler(): # arbitrary payload
+@app.route('/scheduledEventHandler', methods=['POST']) 
+def scheduledEventHandler(): # arbitrary payload
 	args = request.get_json()	
-	response = events.eventHandler(args)
+	response = events.scheduledEventHandler(args)
 	return(jsonify(response))  
    
