@@ -11,5 +11,5 @@ env_vars = [
 	'POSTGRES_CONNECTION_STRING'	
 ]
 
-for env_var in env_vars:
+for env_var in env_vars:	
 	vars()[env_var] = os.environ[project_name+'_'+env_var]

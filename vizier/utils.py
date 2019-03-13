@@ -1,3 +1,6 @@
+import pytz
+from datetime import datetime as dt
+
 def extractOrComplain(args, keys):  
   return_values = [] 
   for key in keys:
@@ -15,7 +18,7 @@ def extractOrComplain(args, keys):
 def now(tz_string,returnString=True):
   # get current time in tz
   tz = pytz.timezone(tz_string)
-  t = datetime.now(tz)  
+  t = dt.now(tz)  
   if returnString:
     return(t.strftime("%Y-%m-%d %H:%M:%S %z"))
   else:

@@ -1,7 +1,9 @@
 import os, pdb, urllib, json, logging, vizier
 logging.captureWarnings(True)
 from nose.tools import *
-test_app = vizier.app.test_client()
+from vizier import app
+app.testing = True
+test_app = app.test_client()
 
 def check_status_code(rv):
 	if rv.status_code != 200:
@@ -47,38 +49,42 @@ def check_return_data(returnData, expectedOutput):
 
 
 class FlaskRouteTester():
-	def __init__(self, url, input, output):
-		self.url = url
-		self.input = input 
-		self.output	= output
+  def __init__(self, url, input, output):  
+    self.url = url
+    self.input = input 
+    self.output	= output
+    self.headers = {
+      'Content-Type': 'application/json',
+    }
 
-	def test(self):
+  def test(self, method='GET'):
 		
-		url_string = urllib.urlencode(self.input)
-		print('-----Testing '+self.url+' with input ['+url_string+'] ...')
-		url_string = urllib.urlencode(self.input)
+    url_string = urllib.urlencode(self.input)
+    print('-----Testing '+self.url+' with input ['+url_string+'] ...')
+    url_string = urllib.urlencode(self.input)
 
-		print('url:')
-		print(self.url+'?'+url_string)
+    print('url:')	
+    print(self.url)	
 
-		rv = test_app.get(self.url+'?'+url_string) 
+    if method == 'GET':
+      rv = test_app.get(self.url+'?'+url_string)       
+    elif method == "POST":
+      rv = test_app.post(self.url, data=self.input, headers=self.headers) 
+    else:
+      raise ValueError('Method not recognized')  
 		
 		#check the status code
-		check_status_code(rv)
+    check_status_code(rv)
 
 		#check the headers
-		check_content_type(rv.headers, self.output)
-		if (self.output is not None):
-			check_return_data(rv.data, self.output)
+    check_content_type(rv.headers, self.output)
+    if (self.output is not None):
+      check_return_data(rv.data, self.output)
       
-		print('\t-Route passed!')
+    print('\t-Route passed!')
 	
 
 def test_routes():
-  exampleChild1 = '-LEk-9xB3vcNu19IoWES'
-  exampleUser1 = 'GNKgnI2j0NhWF0fodhBE9pa43m23'
-  exampleEmail1 = 'meylan.stephan@gmail.com'		
-  exampleIP = '76.102.86.4'
 
   print('Testing routes...')
 
@@ -86,7 +92,15 @@ def test_routes():
   t = FlaskRouteTester('/',{},'Flask is running!')
   t.test()		
 
+  # check addUser
+  t = FlaskRouteTester('/addUser',{"vizierStudyId":"ContinuousCDI","payload":{"identifier":"meylan.stephan@gmail.com"}},{"success":1})
+  t.test()    
+
+  
+  #t = FlaskRouteTester('/addUser',,{"success":1})
+  #t.test()    
+
   print('All tests passed!')
 
+test_routes()
 
-test_routes() 

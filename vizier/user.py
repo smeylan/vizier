@@ -41,7 +41,7 @@ def addUser(args, fb, scheduler):
 		if 'success' not in response:
 			return({'error':'problemFollowupEvents'})
 
-	return({"success":1})
+	return({"vizierUserId":vizierUserId})
 
 
 def updateUser(args, fb, scheduler):

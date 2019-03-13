@@ -30,12 +30,12 @@ def scheduledEventHandler(args):
     
 
 def processEvent(vizierUserId, vizierStudyId, vizierEvent):
-	'''adjudicate between specific event logic on the basis of event type'''
-	
-	if event_type == 'email':	
+	'''adjudicate between specific event logic on the basis of event type'''	
+
+	if vizierEvent['event_type'] == 'email':	
 		response = processEvent_email(vizierUserId, vizierStudyId, vizierEvent)
 
-	elif event_type == 'api':
+	elif vizierEvent['event_type'] == 'api':
 		response = processEvent_API(vizierUserId, vizierStudyId, vizierEvent)			
 	else:
 		raise NotImplementedError	

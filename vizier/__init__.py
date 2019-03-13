@@ -108,43 +108,59 @@ limiter = Limiter(
 
 
 # ROUTES - ACTIVE
-@app.route('/')
+@app.route('/', )
 def index():
     return 'Flask is running!'
 
 @limiter.limit("100 per hour")
-@app.route('/addUser', methods=['POST'])
+@app.route('/addUser', methods=['POST','GET'])
 def addUser(): # vizierStudyId, payload
-	args = request.get_json() 
-	response = user.addUser(args, fb, scheduler)
-	return(jsonify(response))  
+    print('Add user called!')
+    if request.method == 'POST':   
+        args = request.get_json()
+    elif request.method == 'GET':   
+        args = request.args.to_dict()
+    response = user.addUser(args, fb, scheduler)
+    return(jsonify(response))  
 
 
 @limiter.limit("100 per hour")
-@app.route('/updateUser', methods=['POST']) 
+@app.route('/updateUser', methods=['POST','GET']) 
 def updateUser(): # vizierUserId, vizierSegmentId, payload
-	args = request.get_json()	
-	response = user.updateUser(args, fb, scheduler)
-	return(jsonify(response))  
+    if request.method == 'POST':   
+        args = request.get_json()
+    elif request.method == 'GET':   
+        args = request.args.to_dict()
+    response = user.updateUser(args, fb, scheduler)
+    return(jsonify(response))  
 
 @limiter.limit("10 per hour")
-@app.route('/removeUser', methods=['POST']) 
+@app.route('/removeUser', methods=['POST','GET']) 
 def removeUser(): # vizierUserId
-	args = request.get_json()	
-	response = user.removeUser(args, fb, scheduler)
-	return(jsonify(response))  
+    if request.method == 'POST':   
+        args = request.get_json()
+    elif request.method == 'GET':   
+        args = request.args.to_dict()
+    response = user.removeUser(args, fb, scheduler)
+    return(jsonify(response))  
 
 @limiter.limit("10 per hour")
-@app.route('/inviteUser', methods=['POST']) 
+@app.route('/inviteUser', methods=['POST','GET']) 
 def inviteUser(): #  vizierStudyId, identifier
-	args = request.get_json()	
-	response = user.inviteUser(args, fb, scheduler)
-	return(jsonify(response))  
+    if request.method == 'POST':   
+        args = request.get_json()
+    elif request.method == 'GET':   
+        args = request.args.to_dict()
+    response = user.inviteUser(args, fb, scheduler)
+    return(jsonify(response))  
 
 @limiter.limit("100 per hour")
-@app.route('/scheduledEventHandler', methods=['POST']) 
+@app.route('/scheduledEventHandler', methods=['POST','GET']) 
 def scheduledEventHandler(): # arbitrary payload
-	args = request.get_json()	
-	response = events.scheduledEventHandler(args)
-	return(jsonify(response))  
+    if request.method == 'POST':   
+        args = request.get_json()
+    elif request.method == 'GET':   
+        args = request.args.to_dict()
+    response = events.scheduledEventHandler(args)
+    return(jsonify(response))  
    
