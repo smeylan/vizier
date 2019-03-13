@@ -18,26 +18,25 @@ def scheduledEventTrigger(userId, studyId, eventId):
 
 def scheduledEventHandler(args):
 	''' API endpoint that allows a trigger to call processEvent on scheduled events'''
-	userId, studyId, eventId = utils.extractOrComplain(args, ['userId', \
-		'studyId', 'eventId']) 
+	vizierUserId, vizierStudyId, vizierEventId = utils.extractOrComplain(args, ['vizierUserId', 'vizierStudyId', 'vizierEventId']) 
 
 	# retrieve the event from Firebase
-	segmentId = eventId.split('_')[0]
+	vizierSegmentId = vizierEventId.split('_')[0]
 	
-	segment = fb.reference('studies/'+studyId+'/'+segmentId).get()
+	vizierSegment = fb.reference('studies/'+vizierStudyId+'/'+vizierSegmentId).get()
 
-	response = processEvent(userId, studyId, segment[followup_events][eventId])
+	response = processEvent(vizierUserId, vizierStudyId, vizierSegment['followup_events'][vizierEventId])
 	return(response)	
     
 
-def processEvent(userId, studyId, event):
+def processEvent(vizierUserId, vizierStudyId, vizierEvent):
 	'''adjudicate between specific event logic on the basis of event type'''
 	
 	if event_type == 'email':	
-		response = processEvent_email(userId, studyId, event)
+		response = processEvent_email(vizierUserId, vizierStudyId, vizierEvent)
 
 	elif event_type == 'api':
-		response = processEvent_API(userId, studyId, event)			
+		response = processEvent_API(vizierUserId, vizierStudyId, vizierEvent)			
 	else:
 		raise NotImplementedError	
 

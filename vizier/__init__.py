@@ -114,7 +114,7 @@ def index():
 
 @limiter.limit("100 per hour")
 @app.route('/addUser', methods=['POST'])
-def addUser(): # userId
+def addUser(): # vizierStudyId, payload
 	args = request.get_json() 
 	response = user.addUser(args, fb, scheduler)
 	return(jsonify(response))  
@@ -122,25 +122,24 @@ def addUser(): # userId
 
 @limiter.limit("100 per hour")
 @app.route('/updateUser', methods=['POST']) 
-def updateUser(): # userId, segmentId, state, payload
+def updateUser(): # vizierUserId, vizierSegmentId, payload
 	args = request.get_json()	
 	response = user.updateUser(args, fb, scheduler)
 	return(jsonify(response))  
 
 @limiter.limit("10 per hour")
 @app.route('/removeUser', methods=['POST']) 
-def removeUser(): # userId, segmentId, state, payload
+def removeUser(): # vizierUserId
 	args = request.get_json()	
 	response = user.removeUser(args, fb, scheduler)
 	return(jsonify(response))  
 
 @limiter.limit("10 per hour")
 @app.route('/inviteUser', methods=['POST']) 
-def inviteUser(): # userId, segmentId, state, payload
+def inviteUser(): #  vizierStudyId, identifier
 	args = request.get_json()	
 	response = user.inviteUser(args, fb, scheduler)
 	return(jsonify(response))  
-
 
 @limiter.limit("100 per hour")
 @app.route('/scheduledEventHandler', methods=['POST']) 
