@@ -16,6 +16,7 @@ import json
 # app modules
 import user
 import events
+import email_google
 
 
 # for flask, rate limiter, CORS
@@ -84,6 +85,7 @@ firebase_admin.initialize_app(cred, {
 })
 fb = db
 
+emailer = email_google.Gmail(os.environ['VIZIER_GMAIL_ADDRESS'], os.environ['VIZIER_GMAIL_PW'])
 
 # initialize a scheduler for background tasks from apscheduler
 jobstores = {
@@ -120,7 +122,7 @@ def addUser(): # vizierStudyId, payload
         args = request.get_json()
     elif request.method == 'GET':   
         args = request.args.to_dict()
-    response = user.addUser(args, fb, scheduler)
+    response = user.addUser(args, fb, emailer, scheduler)
     return(jsonify(response))  
 
 
@@ -131,7 +133,7 @@ def updateUser(): # vizierUserId, vizierSegmentId, payload
         args = request.get_json()
     elif request.method == 'GET':   
         args = request.args.to_dict()
-    response = user.updateUser(args, fb, scheduler)
+    response = user.updateUser(args, fb, scheduler, emailer)
     return(jsonify(response))  
 
 @limiter.limit("10 per hour")
@@ -151,7 +153,7 @@ def inviteUser(): #  vizierStudyId, identifier
         args = request.get_json()
     elif request.method == 'GET':   
         args = request.args.to_dict()
-    response = user.inviteUser(args, fb, scheduler)
+    response = user.inviteUser(args, fb, scheduler, emailer)
     return(jsonify(response))  
 
 @limiter.limit("100 per hour")
@@ -161,6 +163,6 @@ def scheduledEventHandler(): # arbitrary payload
         args = request.get_json()
     elif request.method == 'GET':   
         args = request.args.to_dict()
-    response = events.scheduledEventHandler(args)
+    response = events.scheduledEventHandler(args, fb, emailer)
     return(jsonify(response))  
    

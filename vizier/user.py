@@ -3,7 +3,7 @@ import events
 import pytz
 
 
-def addUser(args, fb, scheduler):
+def addUser(args, fb, emailer, scheduler):
 	'''instantiate a user in Vizier with a studyId and an arbitrary payload''' 
 	vizierStudyId, payload = utils.extractOrComplain(args, ['vizierStudyId','payload'])
 
@@ -18,7 +18,7 @@ def addUser(args, fb, scheduler):
 		tz = "America/New_York"	
 
 	#instantiate in Firebase, get back the new key name
-	vizierUserId = fb.reference('users/').push(
+	vizierUser = fb.reference('users/').push(
 		{
 			"vizierStudyId": vizierStudyId,
 			"segment": studyForUser['START'],
@@ -27,10 +27,11 @@ def addUser(args, fb, scheduler):
 			"timezone": tz
 		}
 	)
+	vizierUserId = vizierUser.key	
 
 	# process any immediate events
 	for event in current_segment["immediate_events"]:
-		response = events.processEvent(vizierUserId, vizierStudyId, event)
+		response = events.processEvent(vizierUserId, vizierStudyId, event, fb, emailer)		
 		if 'success' not in response:
 			return({'error':'problemImmediateEvents'})
 
@@ -44,7 +45,7 @@ def addUser(args, fb, scheduler):
 	return({"vizierUserId":vizierUserId})
 
 
-def updateUser(args, fb, scheduler):
+def updateUser(args, fb, scheduler, emailer):
 	'''register completion for a segmentId, cancel outstanding events, process all immediate events for the next segment, schedule the followup events for the next segments, and update the state of the user to reflect their new segment'''
 
 	vizierUserId, vizierSegmentId, payload = utils.extractOrComplain(args, ['vizierUserId', 'vizierStudyId', vizierSegmentId, 'payload'])	
@@ -79,12 +80,13 @@ def updateUser(args, fb, scheduler):
 			continue
 		
 		for event in study[next_segment_id]['immediate_events']:
-			response = events.processEvent(vizierUserId, vizierStudyId, event)
+			response = events.processEvent(vizierUserId, vizierStudyId, event, fb, emailer)
+
 			if 'success' not in response:
 				return({'error':'problemImmediateEvents'})
 
 		for event in study[next_segment_id]['followup_events']:
-			response = events.scheduleEvent(vizierUserId, vizierStudyId, event, scheduler)
+			response = events.scheduleEvent(vizierUserId, vizierStudyId, event, scheduler, emailer)
 			if 'success' not in response:
 				return({'error':'problemFollowupEvents'})
 
@@ -107,5 +109,5 @@ def removeUser(args, fb, scheduler):
 	return({'success':1})
 
 
-def inviteUser(vizierStudyId, identifier):
+def inviteUser(vizierStudyId, identifier, emailer):
 	raise NotImplementedError		

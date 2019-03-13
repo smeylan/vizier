@@ -16,7 +16,7 @@ def scheduledEventTrigger(userId, studyId, eventId):
   	return(resp.text)
 
 
-def scheduledEventHandler(args):
+def scheduledEventHandler(args, fb, emailer):
 	''' API endpoint that allows a trigger to call processEvent on scheduled events'''
 	vizierUserId, vizierStudyId, vizierEventId = utils.extractOrComplain(args, ['vizierUserId', 'vizierStudyId', 'vizierEventId']) 
 
@@ -25,33 +25,66 @@ def scheduledEventHandler(args):
 	
 	vizierSegment = fb.reference('studies/'+vizierStudyId+'/'+vizierSegmentId).get()
 
-	response = processEvent(vizierUserId, vizierStudyId, vizierSegment['followup_events'][vizierEventId])
+	response = processEvent(vizierUserId, vizierStudyId, vizierSegment['followup_events'][vizierEventId], fb, emailer)
 	return(response)	
     
 
-def processEvent(vizierUserId, vizierStudyId, vizierEvent):
+def processEvent(vizierUserId, vizierStudyId, vizierEvent, fb, emailer):
 	'''adjudicate between specific event logic on the basis of event type'''	
 
 	if vizierEvent['event_type'] == 'email':	
-		response = processEvent_email(vizierUserId, vizierStudyId, vizierEvent)
+		response = processEvent_email(vizierUserId, vizierStudyId, vizierEvent, fb, emailer)
 
 	elif vizierEvent['event_type'] == 'api':
-		response = processEvent_API(vizierUserId, vizierStudyId, vizierEvent)			
+		response = processEvent_API(vizierUserId, vizierStudyId, vizierEvent, fb)			
 	else:
 		raise NotImplementedError	
 
 	return(response)
 
 
-def processEvent_email(userId, studyId, event):
-	'''send an email'''
+def processEvent_email(vizierUserId, vizierStudyId, vizierEvent, fb, emailer):
+	'''send an email'''	
+	
+	# get the properties of the user to pull out recipient email
+	user = fb.reference('users/'+vizierUserId)
+	if 'email' not in user:
+		return({'error':'noEmailForParticipant'})
+	else:
+		recipient_email = user['email']
 
-	# "email_id" is a unique identidier for the copy for the email		
-	# "user_vars: is a dict with a map of variable names to keys in users/payload
-	# "string_vars" is a simple key-value pair
-	raise NotImplementedError
 
-def processEvent_API(userId, studyId, event):
+	# get the relevant email content from the email node. "email_id" is a unique identidier for the copy for the email		
+	email = fb.reference('study/'+vizierStudyId+'/email/'+vizierEvent['email_id'])
+	if email is None:
+		return({'error':'emailTemplateNotFound'})
+
+	# email must have 'subject' and 'body'
+	body = email['body']
+	subject = email['subject']	
+	
+	# Update subject and body  
+
+	# "user_vars: is a dict with a map of variable names to keys in users/payload. Appopriate in order to get variables from the user node in Firebase
+	for search,key in event['user_vars'].items():
+		if key in user:
+			replace = user[key]
+		else:
+			return({"error":"userKeyMissingForEmail"})
+		
+		body = body.replace('$'+search, replace)
+		subject = subject.replace('$'+search.upper(), replace)
+
+	# "string_vars" is a simple key-value pair. Appropriate in order to get variables from the study node in Firebase
+	for search,replace in event['string_vars'].items():				
+		body = body.replace(search, replace)
+		subject = subject.replace('$'+search.upper(), replace)
+
+	emailer.send_message(subject=subject,body=body,recipient=recipient_email)	
+
+	return({'success':1})
+
+def processEvent_API(vizierUserId, vizierStudyId, vizierEvent, fb, emailer):
 	'''hit an API'''
 	# "url" is the URL of the API endpoint to hit
 	if 'url' not in event:
@@ -65,7 +98,7 @@ def processEvent_API(userId, studyId, event):
 	# "user_vars": is a dict with a map of variable names to keys in users/payload. processEvent interprets this so that the POST body with include 'key':users['payload'][value]
 	
 	if 'user_vars' in event:
-		user_vars = fb.reference('users/'+userId+'/user_vars').get()
+		user_vars = fb.reference('users/'+vizierUserId+'/user_vars').get()
 		for key, value in event['user_vars'].items():
 			post_body[key] = user_vars[value]		
 
@@ -88,21 +121,21 @@ def processEvent_API(userId, studyId, event):
 
 	return({'success':1})
 
-def scheduleEvent(userId, studyId, event, scheduler):
+def scheduleEvent(vizierUserId, vizierStudyId, event, scheduler):
 	'''Add an event to be run in the future, stored as an APscheduler job. When the time is up, hit the trigger, which generates an API call. Thus all future events are processed by the same infrastructure used to hadle events now'''
 	#(vizier event = apscheduler job)
 
 	job_list = [x.id for x in scheduler.get_jobs()]
 
 	# compose a unique job name 
-	job_name = userId+'_'+studyId+'_'+event['eventId']
+	job_name = userId+'_'+vizierStudyId+'_'+event['eventId']
 
 	# compute the date using the date string
 	schedule_string = event['event_schedule']
 
 	
 	# get the user's creation time in utc
-	user = fb.reference('users/'+userId).get()
+	user = fb.reference('users/'+vizierUserId).get()
 	started_study_dt = parse(user['createdAtLocal'])
 	current_dt = utils.now(user['timezone'],returnString=False)
 
@@ -113,7 +146,7 @@ def scheduleEvent(userId, studyId, event, scheduler):
 		return({'error':'alreadyScheduled'})
 	else:
 		# if not, add it
-		scheduler.add_job(id=job_name, func=processEventTrigger, trigger='date', run_date= event_utc_dt, args = [userId, studyId, event['eventId']], misfire_grace_time= 120)
+		scheduler.add_job(id=job_name, func=processEventTrigger, trigger='date', run_date= event_utc_dt, args = [vizierUserId, studyId, event['eventId']], misfire_grace_time= 120)
 
 def cancelEvents(userId, studyId, current_segmentId, scheduler):
 	'''cancel events in the scheduler either for a user, or for a specific segment for a user (for example, when they have advanced to the next segment)'''
@@ -123,12 +156,12 @@ def cancelEvents(userId, studyId, current_segmentId, scheduler):
 	if segmentId is None:	
 		#cancel all events for this user
 		for job in job_list:
-			if job.split('_')[0] == userId:
+			if job.split('_')[0] == vizierUserId:
 				scheduler.remove_job(job_id=job)  
 	else: 
 		# cancel all jobs with current_segmentID
 		for job in job_list:
-			if job.split('_')[0] == userId:
+			if job.split('_')[0] == vizierUserId:
 				if job.split('_')[2] == current_segmentId:
 					scheduler.remove_job(job_id=job)  
 
