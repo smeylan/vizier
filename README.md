@@ -1,4 +1,8 @@
-# Overveiw
+<p align="center">
+<img src="docs/pasha.jpg" width="40%">
+</p>
+
+# Overview
 Longitudinal behavioral research relies increasingly on the integration of multiple web apps. Vizier is intended to provide a "glue layer" that maintains a stateful representation of study participants, and coordinates calls to these web apps  
 
 
