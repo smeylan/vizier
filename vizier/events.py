@@ -86,7 +86,7 @@ def processEvent_email(vizierUserId, vizierStudyId, vizierEvent, fb, emailer):
 
 	return({'success':1})
 
-def processEvent_API(vizierUserId, vizierStudyId, vizierEvent, fb, emailer):
+def processEvent_API(vizierUserId, vizierStudyId, vizierEvent, fb):
 	'''hit an API'''
 	# "url" is the URL of the API endpoint to hit
 	if 'url' not in vizierEvent:
@@ -115,11 +115,13 @@ def processEvent_API(vizierUserId, vizierStudyId, vizierEvent, fb, emailer):
 	
 	# make the request
 	if method == 'post':
-		resp = requests.post(url, data=post_body)  
+		resp = requests.post(vizierEvent['url'], data=post_body)  
 	elif method == 'get':
-		resp = requests.get(url, data=post_body)  
+		resp = requests.get(vizierEvent['url'], data=post_body)  
 	else: 
 		return({'error':'methodNotRecognized'})
+
+	# stub: do we want to do something with the response (resp)? -- either to update the state or to confirm success
 
 	return({'success':1})
 

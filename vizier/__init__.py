@@ -127,13 +127,13 @@ def addUser(): # vizierStudyId, payload
 
 
 @limiter.limit("100 per hour")
-@app.route('/updateUser', methods=['POST','GET']) 
-def updateUser(): # vizierUserId, vizierSegmentId, payload
+@app.route('/registerSegmentCompletion', methods=['POST','GET']) 
+def registerSegmentCompletion(): # vizierUserId, vizierSegmentId, payload
     if request.method == 'POST':   
         args = request.get_json()
     elif request.method == 'GET':   
         args = request.args.to_dict()
-    response = user.updateUser(args, fb, scheduler, emailer)
+    response = user.registerSegmentCompletion(args, fb, scheduler, emailer)
     return(jsonify(response))  
 
 @limiter.limit("10 per hour")

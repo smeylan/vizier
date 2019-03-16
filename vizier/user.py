@@ -61,22 +61,26 @@ def addUser(args, fb, emailer, scheduler):
 	return({"vizierUserId":vizierUserId})
 
 
-def updateUser(args, fb, scheduler, emailer):
+def registerSegmentCompletion(args, fb, scheduler, emailer):
 	'''register completion for a segmentId, cancel outstanding events, process all immediate events for the next segment, schedule the followup events for the next segments, and update the state of the user to reflect their new segment'''
 
-	vizierUserId, vizierSegmentId, payload = utils.extractOrComplain(args, ['vizierUserId', 'vizierStudyId', vizierSegmentId, 'payload'])	
+	vizierUserId, vizierSegmentId, payload = utils.extractOrComplain(args, ['vizierUserId', 'vizierSegmentId', 'payload'])	
     
+	payload = json.loads(payload.replace("'", '"'))
+
 	# confirm that the segment for this user is in a state where it can be updated (to handle errant API calls)
 	user = fb.reference('users/'+vizierUserId).get()
 	vizierStudyId = user['vizierStudyId']
 
-	if user['segment'] != study[vizierSegmentId]:
-		# Vizier thinks that the user is not in the state that is currently being registed as complete. This is likely an errant API call, and will be ignored
+	study = fb.reference('studies/'+vizierStudyId).get()
+
+	if user['segment'] != vizierSegmentId:
+		# Vizier thinks that the user (first term) is not in the state that is currently being registed as complete in this API call (2nd term). This is likely an errant API call, and will be ignored
 		return({'error':'inconsistentSegment'})
 
 	# log that this was completed 
 	fb.reference('completed/'+vizierUserId).update({
-		'segment':segmentId,
+		'segment':vizierSegmentId,
 		'time': utils.now('Etc/UTC'),
 		'payload': payload # for logging, we lee[ the payload around]
 	})
@@ -89,7 +93,7 @@ def updateUser(args, fb, scheduler, emailer):
 , scheduler)
 
 	# process the next segments
-	for next_segment_id in study[vizierSegmentId]['next_segments']:
+	for next_segment_id in study[vizierSegmentId]['next_segment_names']:
 
 		if next_segment_id == '$END$':
 			# no next step to process if that was a final segment
@@ -99,11 +103,13 @@ def updateUser(args, fb, scheduler, emailer):
 			response = events.processEvent(vizierUserId, vizierStudyId, event, fb, emailer)
 
 			if 'success' not in response:
+				print(response)
 				return({'error':'problemImmediateEvents'})
 
 		for event in study[next_segment_id]['followup_events']:
-			response = events.scheduleEvent(vizierUserId, vizierStudyId, event, scheduler, emailer)
+			response = events.scheduleEvent(vizierUserId, vizierStudyId, event, fb, scheduler)
 			if 'success' not in response:
+				print(response)
 				return({'error':'problemFollowupEvents'})
 
 		# update the state of the user in Firebase
