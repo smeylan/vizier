@@ -1,0 +1,26 @@
+{
+	"WebCDI1_email": {
+		"subject":"Please complete the first vocabulary survey",
+		"body":"$EMAIL Welcome to 1st CDI for $STUDYID"
+	},		
+	"WebCDI1_reminderEmail1":{
+		"subject":"Reminder: Please complete the second vocabulary survey",
+		"body":"$EMAIL Reminder #1 CDI #1. for $STUDYID"
+	},		
+	"WebCDI1_reminderEmail2":{
+		"subject":"Final Reminder: Please complete the second vocabulary survey",
+		"body":"$EMAIL Reminder #2 CDI #1 for $STUDYID"
+	},
+	"WebCDI2_email": {
+		"subject":"Please complete the second vocabulary survey",
+		"body":"$EMAIL Please complete the 2nd CDI for $STUDYID"
+	},		
+	"WebCDI2_reminderEmail1":{
+		"subject":"Reminder: Please complete the second vocabulary survey",
+		"body":"$EMAIL Reminder #1 CDI #2 for $STUDYID"
+	},		
+	"WebCDI2_reminderEmail2":{
+		"subject":"Final Reminder: Please complete the second vocabulary survey",
+		"body":"$EMAIL Reminder #2 CDI #2 for $STUDYID"
+	}
+}

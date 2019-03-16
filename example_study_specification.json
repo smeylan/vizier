@@ -1,206 +1,183 @@
 {
-    "START": "WebCDI1",
-    "WebCDI1":{
-        "previous_segment_name": "$START$",
-        "next_segment_names": ["WordfulOnboarding"],
-        "immediate_events": [
-            {
-                "eventId":"WebCDI1_email1",
-                "event_type":"email",
-                "email_id":"<webCDI1_emailId>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            }
-        ],
-        "followup_events": [
-            {
-                "eventId":"WebCDI1_reminderEmail1",
-                "event_type":"email",
-                "schedule":"e_2",
-                "email_id":"<webCDIreminder1_emailId>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            },
-            {
-                "eventId":"WebCDI1_reminderEmail2",
-                "event_type":"email",
-                "schedule":"e_4",
-                "email_id":"<webCDIreminder2_emailId>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            }    
-        ]
-    },
-    "WordfulOnboarding": {
-        "previous_segment_name": "WebCDI1",
-        "next_segment_names": ["WebCDI2"],
-        "immediate_events": [
-            {
-                "eventId":"WordfulOnboarding_addEmailToStudy",
-                "event_type":"api",
-                "url": "https://wordful-flask-staging.herokuapp.com/addEmailToStudy",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            },
-            {
-                "eventId":"WordfulOnboarding_email1",
-                "event_type":"email",
-                "schedule":"immediate",
-                "email_id":"<WordfulOnboarding_emaiIdl>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            }
-        ],
-        "followup_events":[
-            {
-                "eventId":"WordfulOnboarding_reminderEmail1",
-                "event_type":"email",
-                "schedule":"e_2",
-                "email_id":"<WordfulOnboarding_reminderEmail1_id>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            },
-            {
-                "eventId":"WordfulOnboarding_reminderEmail2",
-                "event_type":"email",
-                "schedule":"e_4",
-                "email_id":"<WordfulOnboarding_reminderEmail2_id>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            }    
-        ]
-    },
-    "WordfulUsage": {
-        "previous_segment_name": "WordfulOnboarding",
-        "next_segment_names": ["WebCDI2"],
-        "followup_events": [
-            {   
-                "eventId":"WordfulUsage_advance",         
-                "event_type":"api",
-                "schedule": "e_30", 
-                "url": "<self>/updateSegment",
-                "user_vars": {
-                    "userId": "userId",                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI",
-                    "segment": "WordfulUsage",
-                    "state": "completed"                
-                }
-            }
-        ]
-    },
-    "WebCDI2": {
-        "previous_segment_name": "WordfulUsage",
-        "next_segment_names": ["Compensation"],
-        "immediate_events": [
-            {
-                "eventId":"WebCDI2_email1",
-                "event_type":"email",
-                "email_id":"<webCDI2_emailId>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            }
-        ],
-        "followup_events": [
-            {
-                "eventId":"WebCDI2_reminderEmail1",
-                "event_type":"email",
-                "schedule":"e_2",
-                "email_id":"<WebCDI2_emailId>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            },
-            {
-                "eventId":"WebCDI2_reminderEmail2",
-                "schedule":"e_4",
-                "email_id":"<WebCDI2_emailId>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            }    
-        ]
-    },
-    "Compensation": {
-        "previous_segment_name": "WebCDI2",
-        "next_segment_names": ["$END$"],
-        "immediate_events": [
-            {
-                "eventId":"Compensation_email1",
-                "event_type":"email",
-                "email_id":"Compensation_emailId>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            }
-        ],
-        "followup_events": [
-            {
-                "eventId":"Compensation_reminderEmail1",
-                "event_type":"email",
-                "schedule":"e_2",
-                "email_id":"<Compensation_emailId>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            },
-            {
-                "eventId":"Compensation_reminderEmail2",
-                "schedule":"e_4",
-                "email_id":"<Compensation_emailId>",
-                "user_vars": {                 
-                    "email": "email"                
-                },
-                "string_vars": {
-                    "studyId": "ContinuousCDI"
-                }
-            }    
-        ]
-    }
+  "Compensation" : {
+    "followup_events" : [ {
+      "email_id" : "<Compensation_emailId>",
+      "eventId" : "Compensation_reminderEmail1",
+      "event_type" : "email",
+      "schedule" : "e_2",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    }, {
+      "email_id" : "<Compensation_emailId>",
+      "eventId" : "Compensation_reminderEmail2",
+      "schedule" : "e_4",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    } ],
+    "immediate_events" : [ {
+      "email_id" : "Compensation_emailId>",
+      "eventId" : "Compensation_email1",
+      "event_type" : "email",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    } ],
+    "next_segment_names" : [ "$END$" ],
+    "previous_segment_name" : "WebCDI2"
+  },
+  "START" : "WebCDI1",
+  "WebCDI1" : {
+    "followup_events" : [ {
+      "email_id" : "WebCDI1_reminderEmail1",
+      "eventId" : "WebCDI1_reminderEmail1",
+      "event_type" : "email",
+      "schedule" : "e_2",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    }, {
+      "email_id" : "WebCDI1_reminderEmail2",
+      "eventId" : "WebCDI1_reminderEmail2",
+      "event_type" : "email",
+      "schedule" : "e_4",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    } ],
+    "immediate_events" : [ {
+      "email_id" : "WebCDI1_email",
+      "eventId" : "WebCDI1_email",
+      "event_type" : "email",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    } ],
+    "next_segment_names" : [ "WordfulOnboarding" ],
+    "previous_segment_name" : "$START$"
+  },
+  "WebCDI2" : {
+    "followup_events" : [ {
+      "email_id" : "WebCDI2_reminderEmail1",
+      "eventId" : "WebCDI2_reminderEmail1",
+      "event_type" : "email",
+      "schedule" : "e_2",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    }, {
+      "email_id" : "WebCDI2_reminderEmail2",
+      "eventId" : "WebCDI2_reminderEmail2",
+      "schedule" : "e_4",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    } ],
+    "immediate_events" : [ {
+      "email_id" : "WebCDI2_email1",
+      "eventId" : "WebCDI2_email1",
+      "event_type" : "email",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    } ],
+    "next_segment_names" : [ "Compensation" ],
+    "previous_segment_name" : "WordfulUsage"
+  },
+  "WordfulOnboarding" : {
+    "followup_events" : [ {
+      "email_id" : "<WordfulOnboarding_reminderEmail1_id>",
+      "eventId" : "WordfulOnboarding_reminderEmail1",
+      "event_type" : "email",
+      "schedule" : "e_2",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    }, {
+      "email_id" : "<WordfulOnboarding_reminderEmail2_id>",
+      "eventId" : "WordfulOnboarding_reminderEmail2",
+      "event_type" : "email",
+      "schedule" : "e_4",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    } ],
+    "immediate_events" : [ {
+      "eventId" : "WordfulOnboarding_addEmailToStudy",
+      "event_type" : "api",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "url" : "https://wordful-flask-staging.herokuapp.com/addEmailToStudy",
+      "user_vars" : {
+        "email" : "email"
+      }
+    }, {
+      "email_id" : "<WordfulOnboarding_emaiIdl>",
+      "eventId" : "WordfulOnboarding_email1",
+      "event_type" : "email",
+      "schedule" : "immediate",
+      "string_vars" : {
+        "studyId" : "ContinuousCDI"
+      },
+      "user_vars" : {
+        "email" : "email"
+      }
+    } ],
+    "next_segment_names" : [ "WebCDI2" ],
+    "previous_segment_name" : "WebCDI1"
+  },
+  "WordfulUsage" : {
+    "followup_events" : [ {
+      "eventId" : "WordfulUsage_advance",
+      "event_type" : "api",
+      "schedule" : "e_30",
+      "string_vars" : {
+        "segment" : "WordfulUsage",
+        "state" : "completed",
+        "studyId" : "ContinuousCDI"
+      },
+      "url" : "<self>/updateSegment",
+      "user_vars" : {
+        "email" : "email",
+        "userId" : "userId"
+      }
+    } ],
+    "next_segment_names" : [ "WebCDI2" ],
+    "previous_segment_name" : "WordfulOnboarding"
+  }
 }

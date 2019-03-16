@@ -1,11 +1,14 @@
 import utils 
 import events
 import pytz
+import json
 
 
 def addUser(args, fb, emailer, scheduler):
 	'''instantiate a user in Vizier with a studyId and an arbitrary payload''' 
 	vizierStudyId, payload = utils.extractOrComplain(args, ['vizierStudyId','payload'])
+
+	payload = json.loads(payload.replace("'", '"'))
 
 	# get the study for this user
 	studyForUser = fb.reference('studies/'+vizierStudyId).get()
@@ -17,12 +20,23 @@ def addUser(args, fb, emailer, scheduler):
 		# default to EST
 		tz = "America/New_York"	
 
+	
+	if 'identifier' in payload:
+		# payload['identifier'] is the field name
+		# payload[payload['identifier']] is a value in the payload corresponding to the specified column
+		existingUser = fb.reference('users').order_by_child(payload['identifier']).equal_to(payload[payload['identifier']]).get()
+
+		if len(existingUser) > 0:
+			return({'error':'userAlreadyExists'}) 
+
+
 	#instantiate in Firebase, get back the new key name
 	vizierUser = fb.reference('users/').push(
 		{
 			"vizierStudyId": vizierStudyId,
 			"segment": studyForUser['START'],
 			"user_vars": payload,
+			"email": payload['email'],
 			"createdAtLocal": utils.now(tz),
 			"timezone": tz
 		}
@@ -32,13 +46,15 @@ def addUser(args, fb, emailer, scheduler):
 	# process any immediate events
 	for event in current_segment["immediate_events"]:
 		response = events.processEvent(vizierUserId, vizierStudyId, event, fb, emailer)		
+
 		if 'success' not in response:
 			return({'error':'problemImmediateEvents'})
 
 
 	# schedule any future events 
 	for event in current_segment["followup_events"]:
-		response = events.scheduleEvent(vizierUserId, vizierStudyId, event, scheduler)	
+		response = events.scheduleEvent(vizierUserId, vizierStudyId, event, fb,scheduler)	
+
 		if 'success' not in response:
 			return({'error':'problemFollowupEvents'})
 
@@ -98,13 +114,16 @@ def updateUser(args, fb, scheduler, emailer):
 
 def removeUser(args, fb, scheduler):
 	'''Remove a user, both from scheduled events and from Firebase'''
-	userId = utils.extractOrComplain(args, ['userId'])
+	vizierUserId = utils.extractOrComplain(args, ['vizierUserId'])
 	
-	# remove anything belonging to this user from the scheduler	
-	cancelEvents(userId, None, None, scheduler)
-
-	# remove the user from Firebase
-	fb.reference('users/'+userId).delete()
+	vizierUser = fb.reference('users/'+vizierUserId).get()
+	if vizierUser is not None:
+		# remove the user from Firebase
+		fb.reference('users/'+vizierUserId).delete()
+		# remove anything belonging to this user from the scheduler	
+		events.cancelEvents(vizierUserId, None, None, scheduler)
+	else:
+		return({'error':'vizierUserIdNotFound'})
 
 	return({'success':1})
 
