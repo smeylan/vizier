@@ -41,11 +41,11 @@ The user flow in the Wordful pilot (for a parent/caregiver) is:
 2. User visits REDCap, completes consenting process
 3. REDCap uses the "data entry trigger" functionality to instantiate a new record in Vizier by hitting the `addUser` route on Vizier, and includes the `studyId`. Vizier now knows the position of the user in the tree representation of the study 
 4. Following the directions in the study specification, Vizier sends an email to the user a user-specific WebCDI link. Vizier now sees this user as being in the "WebCDI1" state.
-5. When the user completes the first WebCDI, the WebCDI app hits the `updateUser` endpoint of Vizier to register that the participant should transition to the next segment of the study. If the user does not do this after 2 days, Vizier sends a follow-up email; it will do the same after 4 days. In both cases, specific information about the user (provided in the initialization) is used to populate the email.
+5. When the user completes the first WebCDI, the WebCDI app hits the `registerSegmentCompletion` endpoint of Vizier to register that the participant should transition to the next segment of the study. If the user does not do this after 2 days, Vizier sends a follow-up email; it will do the same after 4 days. In both cases, specific information about the user (provided in the initialization) is used to populate the email.
 6. Following the directions in the study specification, Vizier sends off an immediate API call to Wordful, instantiating a user in Wordful, passing the study as a parameter. 
-7. At the end of onboarding in Wordful, Wordful hits the `updateUser` endpoint of Vizier to register that the participant has completed onboarding and should transition to the next segment of the study... 
+7. At the end of onboarding in Wordful, Wordful hits the `registerSegmentCompletion` endpoint of Vizier to register that the participant has completed onboarding and should transition to the next segment of the study... 
 6. In the case of the 2nd Wordful pilot, this requires a scheduled self-call to the API to transition the user to the next part of the study after a defined interval (i.e. 30 days), rather than waiting for one of the external web apps to hit Vizier
-7. After e.g. 30 days, Vizier self-calls updateUser and transitions them to the next state...
+7. After e.g. 30 days, Vizier self-calls registerSegmentCompletion and transitions them to the next state...
 8. Which includes sending them an email with a link to the second CDI 
 9. See steps 3
 10. See step 4
@@ -76,7 +76,7 @@ A Vizier study specification --- a tree of segments that allows for the steps bo
 
 ---
 
-**`/updateUser(vizierUserId, vizierSegmentId, payload)`**: updates the state of a user in Vizier. This includes
+**`/registerSegmentCompletion(vizierUserId, vizierSegmentId, payload)`**: updates the state of a user in Vizier. This includes
 
 - evaluating whether this is a well-formed update call
 - registering completion for a segmentId
