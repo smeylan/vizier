@@ -95,7 +95,7 @@ firebase_admin.initialize_app(cred, {
 })
 fb = db
 
-emailer = email_google.Gmail(os.environ['EMAIL_RELAY_ADDRESS'], os.environ['EMAIL_RELAY_PW'])
+emailer = email_google.Gmail(config.EMAIL_RELAY_ADDRESS, config.EMAIL_RELAY_PW)
 
 # initialize a scheduler for background tasks from apscheduler
 jobstores = {
