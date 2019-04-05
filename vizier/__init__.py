@@ -53,6 +53,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ProcessPoolExecutor
 
 # initialize logging for flask
+if not os.path.exists('logs'):
+    os.makedirs('logs')
 flask_handler = RotatingFileHandler('logs/vizier_flask.log', maxBytes =10000, backupCount=2)
 app.logger.addHandler(flask_handler)
 app.logger.setLevel(logging.INFO)
