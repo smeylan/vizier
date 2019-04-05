@@ -72,13 +72,21 @@ if os.path.exists(config.FIREBASE_AUTH_TOKEN_PATH):
     print('Using local JSON as Firebase credential')
     cred = credentials.Certificate(config.FIREBASE_AUTH_TOKEN_PATH)
 else:    
-    raise NotImplementedError
-
     print('Generating Firebase credential from environment variables')
-    
     cred = credentials.Certificate({
-      "type": "service_account",    
+      "type": "service_account",
+      "project_id": "vizier-staging",
+      "private_key_id": "b7580f898c84c03712d0645bf2a91ccb158444d9",
+      "private_key": config.FIREBASE_PRIVATE_KEY,
+      "client_email": config.FIREBASE_EMAIL,
+      "client_id": "108419503168918295488",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/"+urllib.quote(config.FIREBASE_EMAIL)
     })
+    
+    
 
 firebase_admin.initialize_app(cred, {
     'databaseURL': config.FIREBASE_URL

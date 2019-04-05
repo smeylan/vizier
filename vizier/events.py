@@ -4,6 +4,7 @@ import pytz
 import datetime
 from datetime import datetime as dt
 from dateutil.parser import parse
+import config
 
 def scheduledEventTrigger(userId, studyId, eventId):
 	'''when a scheduled event happens in apscheduler, it hits this function, which generates an API call to the handler'''
