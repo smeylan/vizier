@@ -47,5 +47,5 @@ jobs:
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
+            source bin/activate
             python test.py      
