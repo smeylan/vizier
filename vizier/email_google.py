@@ -6,12 +6,8 @@ class Gmail(object):
     def __init__(self, email, password):
         self.email = email
         self.password = password
-        self.server = 'smtp.gmail.com'
-        self.port = 587
-        session = smtplib.SMTP(self.server, self.port)        
-        session.ehlo()
-        session.starttls()
-        session.ehlo
+        session = smtplib.SMTP_SSL('smtp.gmail.com', 465)        
+        session.ehlo()        
         session.login(self.email, self.password)
         self.session = session
 
