@@ -44,6 +44,10 @@ jobs:
       # other common Python testing frameworks include pytest and nose
       # https://pytest.org
       # https://nose.readthedocs.io
+      - run: 
+          name: Get the Firebase Token
+          command: echo $VIZIER_FIREBASE_JSON > $VIZIER_FIREBASE_AUTH_TOKEN_PATH
+
       - run:
           name: run tests
           command: |
