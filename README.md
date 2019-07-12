@@ -10,17 +10,17 @@ The motivation for factoring out particpant management is two-fold. First, it de
 
 Vizier is designed to provide a maximally general set of functions to coordinate a wide range of web apps and services. At its core, it provides for
 
-- Declarative specification of studies as tree structures, where nodes are triggers and edges are states
-- Stateful participant tracking (=position in the tree structure)
+- Declarative specification of studies as tree structures, where nodes are called *triggers* and edges are called *states*
+- Stateful participant tracking (= position in the tree structure)
 - API endpoints to receive external triggers (from an external web app to Vizier)
-- Scheduled API calls (from Vizier to Vizier, scheduled in the future) 
+- Scheduled API calls (technically a call scheduled to be made from Vizier to a Vizier endpoint) 
 - Chaining  API calls when triggers are hit (from external web app to Vizier to external web app)
 - email functionality, such that Vizier can send off emails (equivalent to hitting an external API)  
 
-The above functions are implemented with a very small set of endpoints and shared functions in a Flask web app, plus a scheduling system. 
+The above functions are implemented with a very small, maximally general set of endpoints in a Flask web app, plus a scheduling system. 
 
 
-An the signal development case, Vizier coordinates between REDCap, Wordful, and WebCDI in a second pilot study for Wordful. These three components do participant consenting, smartphone-based data collection, and two WebCDI administrations (desktop or laptop-based vocab evaluations). Rather than build out features in Wordful to interact with REDCap and WebCDI, instead Vizier has a set of general-purpose communication and participant state-tracking functions that allow it to communicate with all three of these web apps. Each study is represented as a set of segments. Each segment has exactly one upstream segment and one or more downstream segments. Every segment has a unique name; cycles are not allowed. A study is composed of a single start segment (initialization), one or more event segments, and one or more end segments. This supports branching logic, which the Wordful scheduler does not handle. Because of the dependence of triggers, a participant may move around on the state tree (though by default checking is used to only permit them to advance state to the next connected segment)
+In the signal development case, Vizier coordinates between REDCap (a participant management system), Wordful (a smarthpone app with an accounts system), and WebCDI (a web app with an accounts system) in a second pilot study for Wordful. In concert, these three components collect participant consent, allow parents to report vocab for weeks or months through the smartphone, and administers two WebCDI administrations (desktop or laptop-based vocab evaluations). Rather than build out features in Wordful to interact with REDCap and WebCDI, Vizier instead provides a set of general-purpose communication and participant state-tracking functions that allow it to communicate with all three of these web apps. Each study is represented as a set of segments. Each segment has exactly one upstream segment and one or more downstream segments. Every segment has a unique name; cycles are not allowed. A study is composed of a single start segment (initialization), one or more event segments, and one or more end segments. This supports branching logic, which the Wordful scheduler does not handle. Because of the dependence of triggers, a participant may move around on the state tree (though by default checking is used to only permit them to advance state to the next connected segment)
 
 ![Study representation](docs/vizier_tree.png)
 
@@ -31,7 +31,7 @@ Each event segment conists of immediate events and followup events. Immediate ev
 
 Both kinds of events have access to the stateful representation of the user (data previously sent to Vizier), and can include this information in either the email content or in API calls. 
 
-Waiting for a duration before transitioning state is a special case of a followup "API" event. This involves making a scheduled call to the `update/` route on Vizier itself. Like Wordful, Vizier uses the APScheduler package backed by a Postgres instance to keep track of queued events. 
+Waiting for a duration before transitioning state is a special case of a followup "API" event. This involves making a scheduled call to the `update/` route on Vizier itself. Like Wordful, Vizier uses the APScheduler package backed by a Postgres instance to keep track of queued events. Queued events are executed by sending off an API call to the 
 
 # Specifics of the Wordful study
 
@@ -39,29 +39,27 @@ The user flow in the Wordful pilot (for a parent/caregiver) is:
 
 1. User clicks Facebook ad
 2. User visits REDCap, completes consenting process
-3. REDCap uses the "data entry trigger" functionality to instantiate a new record in Vizier by hitting the `addUser` route on Vizier, and includes the `studyId`. Vizier now knows the position of the user in the tree representation of the study 
-4. Following the directions in the study specification, Vizier sends an email to the user a user-specific WebCDI link. Vizier now sees this user as being in the "WebCDI1" state.
+3. REDCap uses the "data entry trigger" functionality to instantiate a new record in Vizier by hitting the `addUser` route on Vizier, and includes the `studyId` as a URL parameter. Vizier now knows the position of the user in the tree representation of the study (initialized) 
+4. Following the directions in the study specification, Vizier sends the user a user-specific WebCDI link as an email. Vizier now sees this user as being in the "WebCDI1" state.
 5. When the user completes the first WebCDI, the WebCDI app hits the `registerSegmentCompletion` endpoint of Vizier to register that the participant should transition to the next segment of the study. If the user does not do this after 2 days, Vizier sends a follow-up email; it will do the same after 4 days. In both cases, specific information about the user (provided in the initialization) is used to populate the email.
 6. Following the directions in the study specification, Vizier sends off an immediate API call to Wordful, instantiating a user in Wordful, passing the study as a parameter. 
 7. At the end of onboarding in Wordful, Wordful hits the `registerSegmentCompletion` endpoint of Vizier to register that the participant has completed onboarding and should transition to the next segment of the study... 
 6. In the case of the 2nd Wordful pilot, this requires a scheduled self-call to the API to transition the user to the next part of the study after a defined interval (i.e. 30 days), rather than waiting for one of the external web apps to hit Vizier
-7. After e.g. 30 days, Vizier self-calls registerSegmentCompletion and transitions them to the next state...
-8. Which includes sending them an email with a link to the second CDI 
-9. See steps 3
-10. See step 4
-11. See step 5
-12. When WebCDI registers the 2nd completion of the CDI, Vizier sends an API call to the compensation web app (Vizier could also include a compensation stack, TBD)
+7. After e.g. 30 days, Vizier self-calls registerSegmentCompletion and transitions the user to the next state...
+8. ... first sending them an email with a link to the second CDI (same as step 4) 
+9. Same as step 5
+10. When WebCDI registers the 2nd completion of the CDI, Vizier sends an API call to the compensation web app (Vizier could also include a compensation stack, TBD)
 
 
 # Example Study Specification
 
-A Vizier study specification --- a tree of segments that allows for the steps bove--- for the ContinuousCDI study is shown in `example_study_specification.json`
+A Vizier study specification --- a tree of segments that allows for the steps above--- for the ContinuousCDI study is shown in `example_study_specification.json`
 
 
 
 # API endpoints
 
-**`/addUser(vizierStudyId, payload)`**: instantiates a user in Vizier 
+**`/addUser(vizierStudyId, payload)`**: instantiates a user in Vizier with an arbitrary JSON payload
 
 ***args:***
 `vizierStudyId`: name of the JSON tree specification for the study  
@@ -79,22 +77,22 @@ A Vizier study specification --- a tree of segments that allows for the steps bo
 **`/registerSegmentCompletion(vizierUserId, vizierSegmentId, payload)`**: updates the state of a user in Vizier. This includes
 
 - evaluating whether this is a well-formed update call
-- registering completion for a segmentId
-- cancel outstanding events for that segmentId
-- processing all immediate events for the new segment
-- schduling the followup events for the next segments
-- updating the state of the user to reflect their new segment 
+- registering completion for the previous segmentId
+- cancel outstanding events for the previous segmentId
+- processing all immediate events for the new segment(s) (as identified by segmentId)
+- scheduling the followup events for the next segment(s)
+- updating the state of the user to reflect the new segment 
 
 
 ***args:***
 `vizierUserId`: userId in Vizier  
-`vizierSegmentId`: name of the new segment  
-`payload`: a JSON with any information from the previous segment  
+`vizierSegmentId`: name of the just-completed segment  
+`payload`: a JSON with any information to associate with this segment  
 
 ***returns:***
 `{"success": 1}`
 
-***errors:****
+***errors:***
 `userNotExist`: user must exist  
 `segmentNotExist`: the study for this user must have this segment  
 
@@ -128,7 +126,7 @@ A Vizier study specification --- a tree of segments that allows for the steps bo
 
 ---
 
-**`/scheduledEventHandler(args)`** : run a scheduled event (effectively, a scheduled call to Vizier's API)
+**`/scheduledEventHandler(args)`** : run a scheduled event (effectively, a scheduled call to another Vizier endpoint)
 
 ***args:***
 `vizierUserId`: userId in Vizier  
@@ -144,11 +142,13 @@ A Vizier study specification --- a tree of segments that allows for the steps bo
 
 # Scheduling Format
 
-If an event is in followup_events, then it needs to have a schedule field. A schedule node has a schedule string in the format `<schedule_type>_<days>`. "e_30" means trigger this event 30 days from now (at this time; Vizier does not track user timezone, so it cannot send messages at a specific time. This could be added easily by adding a user representation that keeps that information, but this would also require connected web apps to make requests to update the timezone of the user.
+If an event is in followup_events, then it needs to have a schedule field. A schedule node has a schedule string in the format `<schedule_type>_<days>`. "e_30" means trigger this event 30 days from now (at this time; Vizier does not track user timezone, so it cannot send messages at a specific time. This could be added easily by adding a user representation that keeps that information, but this would also require connected web apps to make requests to update the timezone of the user, in that the user does not themselves use a frontend that can update Vizier with this information.
 
 # Security
 
 Assuming that only other web backends will call Vizier, there is no need for obfuscation in the API. 
+
+An adversarial user could try to figure out how to make an API call that ends a study prematurely 
 
 
 #  Example API calls
