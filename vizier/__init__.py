@@ -197,7 +197,17 @@ def compensate(): # payload depends on the method; all have method, authToken, s
 @app.route('/uploadGiftCodes', methods=['POST','GET']) 
 def uploadGiftCodes():
     if request.method == "POST":
-        file = request.files["file"]        
+        file = request.files["file"]
+        studyId = request.form["studyId"]
+        authToken = request.form["authToken"]        
+        
+        if studyId not in fb.reference('studies/').get():
+            res = make_response(jsonify({"message": "studyId not recognized"}), 200)
+            return res
+
+        if fb.reference('studies/'+studyId+'/authToken').get() != authToken:
+            res = make_response(jsonify({"message": "Invalid authToken"}), 200)
+            return res
 
         print("File uploaded")
         print(file)
@@ -220,7 +230,6 @@ def uploadGiftCodes():
         
 
         res = make_response(jsonify({"message": "File uploaded; "+str(num_new_records) + ' gift codes added'}), 200)
-
         return res
     return render_template("upload_giftcodes.html")
 
