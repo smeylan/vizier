@@ -25,7 +25,7 @@ def scheduledEventHandler(args, fb, emailer):
 	# retrieve the event from Firebase
 	vizierSegmentId = vizierEventId.split('_')[0]
 	
-	vizierSegment = fb.reference('studies/'+vizierStudyId+'/'+vizierSegmentId).get()
+	vizierSegment = fb.reference('studies/'+vizierStudyId+'/structure/'+vizierSegmentId).get()
 
 	response = processEvent(vizierUserId, vizierStudyId, vizierSegment['followup_events'][vizierEventId], fb, emailer)
 	return(response)	

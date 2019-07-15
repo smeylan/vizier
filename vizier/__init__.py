@@ -12,16 +12,19 @@ import os
 import sys
 import urllib
 import json
+import pytz
+import pandas as pd
 
 # app modules
 import user
 import events
 import email_google
+import ouvrecompensate
 
 
 # for flask, rate limiter, CORS
 import config
-from flask import Flask, request, jsonify, send_from_directory, Response
+from flask import Flask, request, jsonify, send_from_directory, Response, render_template, make_response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_cors import CORS
@@ -31,13 +34,16 @@ import logging
 from logging.handlers import RotatingFileHandler
 from logging import getLogger
 
-# import logging from papertrail
+# Firebase
 
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
 
-import pytz
+# Postgres
+
+import sqlalchemy
+from database import db_session
 
 # initialize Flask app
 app = Flask(__name__)
@@ -176,3 +182,45 @@ def scheduledEventHandler(): # arbitrary payload
     response = events.scheduledEventHandler(args, fb, emailer)
     return(jsonify(response))  
    
+# compensation system
+@limiter.limit("10 per hour")
+@app.route('/compensate', methods=['POST','GET']) 
+def compensate(): # payload depends on the method; all have method, authToken, studyId
+    if request.method == 'POST':   
+        args = request.get_json()
+    elif request.method == 'GET':   
+        args = request.args.to_dict()
+    response = compensate.compensate(args, fb, emailer, db_session)
+    return(jsonify(response))  
+
+@limiter.limit("10 per hour")
+@app.route('/uploadGiftCodes', methods=['POST','GET']) 
+def uploadGiftCodes():
+    if request.method == "POST":
+        file = request.files["file"]        
+
+        print("File uploaded")
+        print(file)
+
+        csv_contents = pd.read_csv(file)
+
+        # establish a connection to the datbase
+        existingGiftCodes = pd.read_sql_query('select * from giftcodes', con=database.engine)
+
+        # get the set of compensation codes in there already
+        to_add = csv_contents.loc[~csv_contents.giftCode.isin(existingGiftCodes.giftCode)]
+
+        # compute the number of updated items
+        num_new_records = to_add.shape[0] 
+        print('Adding '+str(num_new_records)+ ' new gift codes...')
+
+        if to_add.shape[0] > 0:
+            # add those items
+            to_add.to_sql('giftcodes', database.engine, index=False, if_exists="append")
+        
+
+        res = make_response(jsonify({"message": "File uploaded; "+str(num_new_records) + ' gift codes added'}), 200)
+
+        return res
+    return render_template("upload_giftcodes.html")
+
